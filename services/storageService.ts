@@ -1,7 +1,11 @@
 
 import { BudgetState, Category, GoalType } from '../types';
 
-const STORAGE_KEY = 'stash_app_data';
+const STORAGE_KEY_PREFIX = 'stash_app_data';
+
+function getStorageKey(userEmail?: string): string {
+  return userEmail ? `${STORAGE_KEY_PREFIX}_${encodeURIComponent(userEmail)}` : STORAGE_KEY_PREFIX;
+}
 
 const DEFAULT_STATE: BudgetState = {
   profile: {
@@ -27,11 +31,11 @@ const DEFAULT_STATE: BudgetState = {
 };
 
 export const storageService = {
-  saveData: (data: BudgetState) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  saveData: (data: BudgetState, userEmail?: string) => {
+    localStorage.setItem(getStorageKey(userEmail), JSON.stringify(data));
   },
-  loadData: (): BudgetState => {
-    const saved = localStorage.getItem(STORAGE_KEY);
+  loadData: (userEmail?: string): BudgetState => {
+    const saved = localStorage.getItem(getStorageKey(userEmail));
     if (saved) {
       try {
         const loaded = JSON.parse(saved);

@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   PlusCircle, 
@@ -20,8 +21,10 @@ import {
   Sparkles,
   ArrowRight,
   Pencil,
-  Banknote
+  Banknote,
+  LogOut
 } from 'lucide-react';
+import { getSession, logout as authLogout } from './auth';
 import { 
   PieChart, 
   Pie, 
@@ -117,9 +120,15 @@ const Modal: React.FC<{ isOpen: boolean; onClose: () => void; title: string; chi
 };
 
 export default function App() {
+  const navigate = useNavigate();
+  const session = getSession()!;
   const [data, setData] = useState<BudgetState>(() => {
-    const loaded = storageService.loadData();
-    return { ...loaded, notifications: loaded.notifications || [] };
+    const loaded = storageService.loadData(session.email);
+    return {
+      ...loaded,
+      notifications: loaded.notifications || [],
+      profile: { ...loaded.profile, name: session.name },
+    };
   });
   const [activeTab, setActiveTab] = useState<'dash' | 'goals' | 'coach' | 'notifs'>('dash');
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
@@ -149,8 +158,8 @@ export default function App() {
   }, [data.expenses]);
 
   useEffect(() => {
-    storageService.saveData(data);
-  }, [data]);
+    storageService.saveData(data, session.email);
+  }, [data, session.email]);
 
   const addNotification = (title: string, message: string, type: Notification['type']) => {
     const newNotif: Notification = {
@@ -255,9 +264,9 @@ export default function App() {
       <header className="flex justify-between items-center mb-10">
         <div>
           <h1 className="text-3xl font-[900] text-slate-900 tracking-tight leading-tight">Stash</h1>
-          <p className="text-slate-500 font-bold text-sm">Welcome back, {data.profile.name.split(' ')[0]}</p>
+          <p className="text-slate-500 font-bold text-sm">Welcome back, {session.name.split(' ')[0]}</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <button 
             onClick={() => {
               setActiveTab('notifs');
@@ -270,10 +279,20 @@ export default function App() {
               <span className="absolute top-3 right-3 w-3 h-3 bg-rose-500 rounded-full border-2 border-white" />
             )}
           </button>
-          <div className="flex items-center gap-2 bg-amber-100 text-amber-700 px-5 py-3 rounded-3xl border border-amber-200 shadow-sm">
+          <div className="flex items-center gap-2 bg-amber-100 text-amber-700 px-4 py-2.5 sm:px-5 sm:py-3 rounded-3xl border border-amber-200 shadow-sm">
             <Trophy size={20} />
             <span className="font-extrabold text-sm">{data.streak} Days</span>
           </div>
+          <button
+            onClick={() => {
+              authLogout();
+              navigate('/login', { replace: true });
+            }}
+            className="p-4 bg-white rounded-3xl text-slate-400 hover:text-rose-600 shadow-sm border border-slate-100 transition-all active:scale-95"
+            title="Log out"
+          >
+            <LogOut size={22} />
+          </button>
         </div>
       </header>
 
