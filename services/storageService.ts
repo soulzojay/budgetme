@@ -10,22 +10,12 @@ function getStorageKey(userEmail?: string): string {
 const DEFAULT_STATE: BudgetState = {
   profile: {
     name: 'Student Explorer',
-    monthlyAllowance: 2000,
+    monthlyAllowance: 0,
     currency: 'GH₵'
   },
   expenses: [],
-  goals: [
-    {
-      id: '1',
-      title: 'New MacBook',
-      targetAmount: 25000,
-      currentAmount: 2500,
-      // Fix: Added missing properties to match SavingGoal interface
-      type: GoalType.LongTerm,
-      durationMonths: 12
-    }
-  ],
-  streak: 3,
+  goals: [],
+  streak: 0,
   notifications: [],
   extraIncome: 0
 };

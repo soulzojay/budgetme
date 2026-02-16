@@ -138,6 +138,8 @@ export default function App() {
   const [customGoalAmounts, setCustomGoalAmounts] = useState<Record<string, string>>({});
   const [aiAdvice, setAiAdvice] = useState<AIAdvice | null>(null);
   const [isThinking, setIsThinking] = useState(false);
+  const [isSetBudgetOpen, setIsSetBudgetOpen] = useState(false);
+  const showSetBudgetModal = data.profile.monthlyAllowance === 0 || isSetBudgetOpen;
 
   // Financial Stats
   const totalSpent = useMemo(() => data.expenses.reduce((sum, e) => sum + e.amount, 0), [data.expenses]);
@@ -245,6 +247,20 @@ export default function App() {
     }));
   };
 
+  const handleSetBudget = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const amount = Number(formData.get('monthlyAllowance'));
+    if (!Number.isNaN(amount) && amount >= 0) {
+      setData(prev => ({
+        ...prev,
+        profile: { ...prev.profile, monthlyAllowance: amount },
+      }));
+      setIsSetBudgetOpen(false);
+      addNotification('Budget set', `Your monthly budget is now ${data.profile.currency}${amount.toLocaleString()}.`, 'success');
+    }
+  };
+
   const handleAddIncome = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -316,7 +332,13 @@ export default function App() {
                   <div className="w-full space-y-4">
                     <div className="flex justify-between items-end text-xs font-bold uppercase tracking-widest text-white/60">
                       <span>Budget</span>
-                      <span className="text-white">{data.profile.currency} {availableBudget.toLocaleString()}</span>
+                      <button
+                        type="button"
+                        onClick={() => setIsSetBudgetOpen(true)}
+                        className="text-white hover:underline focus:underline"
+                      >
+                        {data.profile.currency} {availableBudget.toLocaleString()}
+                      </button>
                     </div>
                     {extraIncome > 0 && (
                       <p className="text-[10px] font-bold text-white/70 uppercase tracking-wider">Includes {data.profile.currency}{extraIncome.toLocaleString()} extra income</p>
@@ -668,6 +690,42 @@ export default function App() {
           </div>
         )}
       </main>
+
+      {/* Set / Edit budget modal — required when monthly allowance is 0 */}
+      <Modal
+        isOpen={showSetBudgetModal}
+        onClose={data.profile.monthlyAllowance === 0 ? () => {} : () => setIsSetBudgetOpen(false)}
+        title={data.profile.monthlyAllowance === 0 ? 'Set your monthly budget' : 'Edit budget'}
+      >
+        <form onSubmit={handleSetBudget} className="space-y-6">
+          <div>
+            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 px-1">
+              Monthly budget ({data.profile.currency})
+            </label>
+            <div className="relative">
+              <span className="absolute left-6 top-1/2 -translate-y-1/2 font-black text-2xl text-slate-300">{data.profile.currency}</span>
+              <input
+                name="monthlyAllowance"
+                type="number"
+                min="0"
+                step="1"
+                required
+                defaultValue={data.profile.monthlyAllowance || ''}
+                className="w-full pl-24 pr-8 py-6 bg-slate-50 border-2 border-slate-100 rounded-[2rem] focus:border-indigo-600 focus:bg-white font-black text-3xl text-slate-800 outline-none"
+                placeholder="0"
+                inputMode="numeric"
+              />
+            </div>
+            <p className="text-slate-500 text-xs font-bold mt-2 px-1">Your total available spending for the month.</p>
+          </div>
+          <button
+            type="submit"
+            className="w-full py-6 bg-indigo-600 text-white font-black text-lg rounded-[2rem] shadow-[0_20px_40px_rgba(79,70,229,0.3)] active:scale-95 transition-all"
+          >
+            {data.profile.monthlyAllowance === 0 ? 'Set budget' : 'Save'}
+          </button>
+        </form>
+      </Modal>
 
       {/* Modern Floating Modals */}
       <Modal isOpen={isAddExpenseOpen} onClose={() => setIsAddExpenseOpen(false)} title="Log Transaction">
